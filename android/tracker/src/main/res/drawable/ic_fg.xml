@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 迹录（上报端）图标：S 形轨迹线 + 节点 + 终点光标，深绿底 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 轨迹主线 -->
+    <path
+        android:pathData="M31,73 C43,65 40,50 52,54 C64,58 61,43 75,39"
+        android:strokeColor="#FF3DDC97"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <!-- 途中节点 -->
+    <path
+        android:fillColor="#88FFFFFF"
+        android:pathData="M46,57 m-2.5,0 a2.5,2.5 0 1,1 5,0 a2.5,2.5 0 1,1 -5,0" />
+    <path
+        android:fillColor="#88FFFFFF"
+        android:pathData="M61,49 m-2.5,0 a2.5,2.5 0 1,1 5,0 a2.5,2.5 0 1,1 -5,0" />
+    <!-- 终点外环 + 实心点 -->
+    <path
+        android:pathData="M75,39 m-9,0 a9,9 0 1,1 18,0 a9,9 0 1,1 -18,0"
+        android:strokeColor="#663DDC97"
+        android:strokeWidth="2.5"
+        android:fillColor="#00000000" />
+    <path
+        android:fillColor="#FF3DDC97"
+        android:pathData="M75,39 m-4.5,0 a4.5,4.5 0 1,1 9,0 a4.5,4.5 0 1,1 -9,0" />
+    <!-- 起点小点 -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M31,73 m-3,0 a3,3 0 1,1 6,0 a3,3 0 1,1 -6,0" />
+</vector>

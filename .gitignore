@@ -1,0 +1,19 @@
+# 服务端运行数据（含数据库与密钥）
+server/data/
+server/.env
+
+# 构建产物
+builds/
+android/.gradle/
+android/build/
+android/*/build/
+android/local.properties
+android/.idea/
+android/.kotlin/
+android/*/captures/
+*.iml
+*.hprof
+
+# 系统
+.DS_Store
+Thumbs.db

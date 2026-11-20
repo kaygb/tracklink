@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TrackLink 轨迹控制台</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2430; --line:#2a3441;
+    --txt:#e6edf3; --dim:#8b98a5; --accent:#3ddc97; --danger:#ff6b6b; --warn:#ffb454;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.55 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+  a{color:var(--accent)}
+  header{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  header h1{font-size:16px;margin:0;font-weight:600}
+  .badge{font-size:12px;color:var(--dim);border:1px solid var(--line);padding:1px 8px;border-radius:99px}
+  main{max-width:1080px;margin:0 auto;padding:18px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .grow{flex:1;min-width:180px}
+  label{display:block;font-size:12px;color:var(--dim);margin-bottom:5px}
+  input,select{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--txt);
+    border-radius:8px;padding:9px 11px;font-size:14px;outline:none}
+  input:focus,select:focus{border-color:var(--accent)}
+  button{background:var(--accent);color:#06170f;border:0;border-radius:8px;padding:9px 16px;
+    font-size:14px;font-weight:600;cursor:pointer}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--txt);font-weight:500}
+  button.danger{background:transparent;border:1px solid #5a2b2b;color:var(--danger)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+  th{color:var(--dim);font-weight:500;font-size:12px}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:#5b6875}
+  .dot.on{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+  .muted{color:var(--dim);font-size:12px}
+  .err{color:var(--danger);font-size:13px;min-height:18px}
+  .kpi{display:flex;gap:18px;flex-wrap:wrap;margin:8px 0 12px}
+  .kpi div{font-size:12px;color:var(--dim)}
+  .kpi b{display:block;font-size:18px;color:var(--txt);font-weight:600}
+  .hidden{display:none}
+  code{background:var(--panel2);border:1px solid var(--line);padding:2px 7px;border-radius:6px;
+    font-size:13px;word-break:break-all}
+  .chk{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--dim)}
+  .chk input{width:auto}
+  .flexline{display:flex;gap:8px;align-items:center}
+  .tag{font-size:11px;color:var(--dim);border:1px solid var(--line);border-radius:6px;padding:1px 6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>TrackLink 轨迹控制台</h1>
+  <span class="badge" id="whoami">未登录</span>
+  <span class="grow"></span>
+  <button class="ghost hidden" id="btnLogout">退出</button>
+</header>
+
+<main>
+  <section class="card" id="loginCard">
+    <div class="row">
+      <div class="grow"><label>用户名</label><input id="username" autocomplete="username" placeholder="admin" /></div>
+      <div class="grow"><label>密码</label><input id="password" type="password" autocomplete="current-password" placeholder="密码" /></div>
+      <div style="align-self:flex-end"><button id="btnLogin">登录</button></div>
+    </div>
+    <p class="err" id="loginErr"></p>
+  </section>
+
+  <section id="app" class="hidden">
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <div><b>设备列表</b> <span class="muted" id="refreshHint"></span></div>
+        <div class="row"><button class="ghost" id="btnRefresh">刷新</button></div>
+      </div>
+      <table>
+        <thead><tr><th>设备</th><th>状态</th><th>电量</th><th>今日</th><th>最后更新</th><th></th></tr></thead>
+        <tbody id="deviceRows"><tr><td colspan="6" class="muted">加载中…</td></tr></tbody>
+      </table>
+    </div>
+
+    <div class="card hidden" id="trackCard">
+      <div class="row" style="justify-content:space-between">
+        <div><b id="trackTitle">轨迹</b></div>
+        <div class="row">
+          <select id="rangeSel" style="width:auto">
+            <option value="today">今天</option>
+            <option value="yesterday">昨天</option>
+            <option value="7">近 7 天</option>
+            <option value="30">近 30 天</option>
+          </select>
+          <button class="ghost" id="btnCloseTrack">关闭</button>
+        </div>
+      </div>
+      <div class="kpi">
+        <div>总里程<b id="kpiDist">-</b></div>
+        <div>轨迹点数<b id="kpiPts">-</b></div>
+        <div>时长<b id="kpiDur">-</b></div>
+        <div>平均速度<b id="kpiSpd">-</b></div>
+      </div>
+      <svg id="miniMap" viewBox="0 0 600 340" width="100%" height="340"
+           style="background:#0f1620;border:1px solid var(--line);border-radius:10px">
+        <polyline id="polyline" fill="none" stroke="#3ddc97" stroke-width="2.5"
+                  stroke-linejoin="round" stroke-linecap="round" points="" />
+        <circle id="ptStart" r="5" fill="#3ddc97" cx="-10" cy="-10" />
+        <circle id="ptEnd" r="5" fill="#ff6b6b" cx="-10" cy="-10" />
+      </svg>
+      <p class="muted">示意图（按经纬度等比投影，非真实底图）。完整地图请看手机端「轨迹查看」App。</p>
+    </div>
+
+    <div class="card" id="adminCard">
+      <b>系统设置</b> <span class="tag" id="adminOnly">管理员</span>
+      <div class="row" style="margin-top:12px">
+        <div class="grow">
+          <label>App1 上传密钥（X-Upload-Key）</label>
+          <div class="flexline"><code id="uploadKey">-</code></div>
+        </div>
+      </div>
+      <p class="muted">把服务端地址 + 这个密钥填到手机端 App1 即可开始上报。密钥烧录在 App1 安装包内，不支持在线轮换；如确需更换，需重新打包并推送新版本。</p>
+      <hr style="border:0;border-top:1px solid var(--line);margin:16px 0" />
+      <b>账号与授权</b>
+      <table style="margin-top:8px">
+        <thead><tr><th>用户名</th><th>角色</th><th>可看设备</th><th></th></tr></thead>
+        <tbody id="userRows"></tbody>
+      </table>
+      <div class="row" style="margin-top:12px">
+        <div class="grow"><label>新用户名</label><input id="newUser" placeholder="viewer1" /></div>
+        <div class="grow"><label>密码（≥6 位）</label><input id="newPass" type="password" /></div>
+        <div class="grow"><label>角色</label>
+          <select id="newRole"><option value="viewer">只读</option><option value="admin">管理员</option></select></div>
+        <div style="align-self:flex-end"><button id="btnAddUser">新增账号</button></div>
+      </div>
+      <p class="err" id="adminErr"></p>
+      <p class="muted">只读账号只能看被授权的设备；点设备行右侧「授权」可调整范围。</p>
+    </div>
+  </section>
+</main>
+
+<script>
+const S = {
+  token: localStorage.getItem('tl_token') || '',
+  user: JSON.parse(localStorage.getItem('tl_user') || 'null'),
+  devices: [],
+  current: null,
+  users: [],
+  settings: null,
+};
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// 后端地址：本地由 Node 服务端同源提供时走相对路径；托管到静态域名时指向云函数网关。
+// 云函数网关地址不写死在源码里：部署后在浏览器控制台执行
+//   localStorage.setItem('tl_api', 'https://<你的环境ID>.ap-shanghai.app.tcloudbase.com')
+// 即可切换。
+const CLOUD_API = '';
+const API_BASE = (() => {
+  const saved = (localStorage.getItem('tl_api') || '').trim().replace(/\/+$/, '');
+  if (saved) return saved;
+  const h = location.hostname;
+  const hosted = h.endsWith('.tcloudbaseapp.com') || h.endsWith('.app.tcloudbase.com');
+  return hosted ? CLOUD_API : '';
+})();
+
+async function api(path, opts = {}) {
+  const res = await fetch(API_BASE + path, {
+    ...opts,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(S.token ? { Authorization: 'Bearer ' + S.token } : {}),
+      ...(opts.headers || {}),
+    },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || ('请求失败 ' + res.status));
+  return data;
+}
+
+function fmtTime(ts) {
+  if (!ts) return '-';
+  const d = new Date(ts);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function fmtDist(m) {
+  if (m == null) return '-';
+  return m >= 1000 ? (m / 1000).toFixed(2) + ' km' : m + ' m';
+}
+function fmtDur(sec) {
+  if (!sec) return '-';
+  const h = Math.floor(sec / 3600), m = Math.round((sec % 3600) / 60);
+  return h ? `${h}h${m}m` : `${m}m`;
+}
+
+function renderWho() {
+  $('whoami').textContent = S.user ? `${S.user.username}（${S.user.role === 'admin' ? '管理员' : '只读'}）` : '未登录';
+  $('loginCard').classList.toggle('hidden', !!S.token);
+  $('app').classList.toggle('hidden', !S.token);
+  $('btnLogout').classList.toggle('hidden', !S.token);
+  $('adminCard').classList.toggle('hidden', !(S.user && S.user.role === 'admin'));
+}
+
+async function login() {
+  $('loginErr').textContent = '';
+  try {
+    const data = await api('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username: $('username').value.trim(), password: $('password').value }),
+    });
+    S.token = data.token; S.user = data.user;
+    localStorage.setItem('tl_token', S.token);
+    localStorage.setItem('tl_user', JSON.stringify(S.user));
+    renderWho();
+    await refreshAll();
+  } catch (e) {
+    $('loginErr').textContent = e.message;
+  }
+}
+
+function logout() {
+  S.token = ''; S.user = null; S.devices = []; S.current = null;
+  localStorage.removeItem('tl_token'); localStorage.removeItem('tl_user');
+  $('deviceRows').innerHTML = ''; $('trackCard').classList.add('hidden');
+  renderWho();
+}
+
+async function refreshAll() {
+  try {
+    const data = await api('/api/devices');
+    S.devices = data.devices;
+    renderDevices();
+    $('refreshHint').textContent = '更新于 ' + new Date(data.serverTime).toLocaleTimeString();
+    if (S.user && S.user.role === 'admin') { await loadSettings(); await loadUsers(); }
+  } catch (e) {
+    if (String(e.message).includes('登录')) logout();
+  }
+}
+
+function renderDevices() {
+  const body = $('deviceRows');
+  if (!S.devices.length) {
+    body.innerHTML = '<tr><td colspan="6" class="muted">还没有设备上报。打开 App1，填好服务端地址与上传密钥并开始记录。</td></tr>';
+    return;
+  }
+  body.innerHTML = S.devices.map((d) => `
+    <tr>
+      <td><b>${esc(d.name)}</b><div class="muted">${esc(d.model || d.id.slice(0, 8))}</div></td>
+      <td><span class="dot ${d.online ? 'on' : ''}"></span>${d.online ? '在线' : '离线'}</td>
+      <td>${d.battery == null ? '-' : d.battery + '%'}</td>
+      <td>${fmtDist(d.distanceToday)}<div class="muted">${d.pointCountToday} 点</div></td>
+      <td>${fmtTime(d.lastSeen)}</td>
+      <td class="row" style="gap:6px">
+        <button class="ghost" data-track="${esc(d.id)}">轨迹</button>
+        ${S.user && S.user.role === 'admin'
+          ? `<button class="ghost" data-rename="${esc(d.id)}">重命名</button>
+             <button class="danger" data-del="${esc(d.id)}">删除</button>` : ''}
+      </td>
+    </tr>`).join('');
+}
+
+function range(name) {
+  const now = Date.now();
+  const day = 86400000;
+  const tz = new Date();
+  const startOfToday = new Date(tz.getFullYear(), tz.getMonth(), tz.getDate()).getTime();
+  if (name === 'today') return [startOfToday, now];
+  if (name === 'yesterday') return [startOfToday - day, startOfToday - 1];
+  return [now - Number(name) * day, now];
+}
+
+async function openTrack(deviceId) {
+  const d = S.devices.find((x) => x.id === deviceId);
+  if (!d) return;
+  S.current = deviceId;
+  $('trackCard').classList.remove('hidden');
+  $('trackTitle').textContent = d.name + ' 轨迹';
+  await loadTrack();
+}
+
+async function loadTrack() {
+  if (!S.current) return;
+  const [from, to] = range($('rangeSel').value);
+  try {
+    const data = await api(`/api/devices/${S.current}/track?from=${from}&to=${to}`);
+    $('kpiDist').textContent = fmtDist(data.stats.distance);
+    $('kpiPts').textContent = data.stats.points;
+    $('kpiDur').textContent = fmtDur(data.stats.duration);
+    $('kpiSpd').textContent = data.stats.avgSpeed + ' km/h';
+    drawTrack(data.points);
+  } catch (e) {
+    $('kpiDist').textContent = '加载失败：' + e.message;
+  }
+}
+
+function drawTrack(points) {
+  const poly = $('polyline');
+  if (!points || points.length < 2) {
+    poly.setAttribute('points', '');
+    $('ptStart').setAttribute('cx', -10); $('ptEnd').setAttribute('cx', -10);
+    return;
+  }
+  const lats = points.map((p) => p[1]), lons = points.map((p) => p[2]);
+  const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+  const minLon = Math.min(...lons), maxLon = Math.max(...lons);
+  const pad = 24, W = 600, H = 340;
+  const dLat = Math.max(maxLat - minLat, 1e-6), dLon = Math.max(maxLon - minLon, 1e-6);
+  const scale = Math.min((W - pad * 2) / dLon, (H - pad * 2) / dLat);
+  const ox = (W - dLon * scale) / 2, oy = (H - dLat * scale) / 2;
+  const px = (lon) => +((lon - minLon) * scale + ox).toFixed(1);
+  const py = (lat) => +((maxLat - lat) * scale + oy).toFixed(1);
+  poly.setAttribute('points', points.map((p) => `${px(p[2])},${py(p[1])}`).join(' '));
+  $('ptStart').setAttribute('cx', px(points[0][2]));
+  $('ptStart').setAttribute('cy', py(points[0][1]));
+  const last = points[points.length - 1];
+  $('ptEnd').setAttribute('cx', px(last[2]));
+  $('ptEnd').setAttribute('cy', py(last[1]));
+}
+
+async function loadSettings() {
+  try {
+    S.settings = await api('/api/settings');
+    $('uploadKey').textContent = S.settings.uploadKey;
+  } catch { /* 忽略 */ }
+}
+
+async function loadUsers() {
+  try {
+    const data = await api('/api/users');
+    S.users = data.users;
+    $('userRows').innerHTML = S.users.map((u) => `
+      <tr>
+        <td>${esc(u.username)}</td>
+        <td>${u.role === 'admin' ? '管理员' : '只读'}</td>
+        <td class="muted">${u.role === 'admin' ? '全部设备' : (u.deviceIds.length ? u.deviceIds.length + ' 台' : '未授权')}</td>
+        <td><button class="ghost" data-acl="${u.id}">授权</button></td>
+      </tr>`).join('');
+  } catch { /* 忽略 */ }
+}
+
+async function editAcl(userId) {
+  const u = S.users.find((x) => x.id === userId);
+  if (!u) return;
+  const list = S.devices.map((d) =>
+    `${u.deviceIds.includes(d.id) ? '[x]' : '[ ]'} ${d.id}  ${d.name}`).join('\n');
+  const input = prompt(`授权「${u.username}」可查看的设备：\n格式：每行一个设备 ID，在行首写 x 表示授权\n\n${list}`, '');
+  if (input === null) return;
+  const ids = input.split('\n')
+    .filter((line) => /^\s*x/i.test(line))
+    .map((line) => line.replace(/^\s*x\s*/i, '').trim().split(/\s+/)[0])
+    .filter(Boolean);
+  try {
+    await api('/api/users/' + userId, { method: 'PATCH', body: JSON.stringify({ deviceIds: ids }) });
+    await loadUsers();
+  } catch (e) { $('adminErr').textContent = e.message; }
+}
+
+async function addUser() {
+  $('adminErr').textContent = '';
+  try {
+    await api('/api/users', {
+      method: 'POST',
+      body: JSON.stringify({
+        username: $('newUser').value.trim(),
+        password: $('newPass').value,
+        role: $('newRole').value,
+      }),
+    });
+    $('newUser').value = ''; $('newPass').value = '';
+    await loadUsers();
+  } catch (e) { $('adminErr').textContent = e.message; }
+}
+
+$('btnLogin').onclick = login;
+$('password').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
+$('btnLogout').onclick = logout;
+$('btnRefresh').onclick = refreshAll;
+$('rangeSel').onchange = loadTrack;
+$('btnCloseTrack').onclick = () => { $('trackCard').classList.add('hidden'); S.current = null; };
+$('btnAddUser').onclick = addUser;
+
+document.addEventListener('click', async (e) => {
+  const t = e.target.closest('button');
+  if (!t) return;
+  if (t.dataset.track) openTrack(t.dataset.track);
+  if (t.dataset.rename) {
+    const name = prompt('设备名称', S.devices.find((d) => d.id === t.dataset.rename)?.name || '');
+    if (name) { await api('/api/devices/' + t.dataset.rename, { method: 'PATCH', body: JSON.stringify({ name }) }); await refreshAll(); }
+  }
+  if (t.dataset.del) {
+    if (confirm('删除该设备及其全部轨迹？不可恢复。')) {
+      await api('/api/devices/' + t.dataset.del, { method: 'DELETE' });
+      await refreshAll();
+    }
+  }
+  if (t.dataset.acl) editAcl(Number(t.dataset.acl));
+});
+
+renderWho();
+if (S.token) refreshAll();
+setInterval(() => { if (S.token && !document.hidden) refreshAll(); }, 30000);
+</script>
+</body>
+</html>

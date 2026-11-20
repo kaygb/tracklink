@@ -1,0 +1,8 @@
+{
+  "name": "tracklink-cloud",
+  "version": "2.0.0",
+  "description": "TrackLink 轨迹云 - CloudBase Web 函数服务端（PostgreSQL）",
+  "main": "index.js",
+  "private": true,
+  "dependencies": {}
+}

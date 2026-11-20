@@ -1,0 +1,14 @@
+{
+  "name": "tracklink-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "TrackLink 轨迹服务端（零第三方依赖，Node 内置 http + sqlite）",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  }
+}

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 迹览（查看端）图标：折叠地图 + 定位针，深蓝底 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- 折叠地图轮廓 -->
+    <path
+        android:pathData="M30,36 L46,30 L62,36 L78,30 L78,72 L62,78 L46,72 L30,78 Z"
+        android:strokeColor="#E6FFFFFF"
+        android:strokeWidth="3"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000" />
+    <!-- 折痕 -->
+    <path
+        android:pathData="M46,30 L46,72 M62,36 L62,78"
+        android:strokeColor="#59FFFFFF"
+        android:strokeWidth="2"
+        android:fillColor="#00000000" />
+    <!-- 定位针 -->
+    <path
+        android:fillColor="#FF3DDC97"
+        android:pathData="M54,42.5c-4.97,0 -9,4.03 -9,9 0,6.75 9,14.5 9,14.5s9,-7.75 9,-14.5c0,-4.97 -4.03,-9 -9,-9z" />
+    <!-- 针孔（用底色挖孔） -->
+    <path
+        android:fillColor="#FF16222E"
+        android:pathData="M54,49.5 m-3,0 a3,3 0 1,1 6,0 a3,3 0 1,1 -6,0" />
+</vector>
